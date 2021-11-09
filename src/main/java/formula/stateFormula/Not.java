@@ -1,8 +1,13 @@
 package formula.stateFormula;
 
 import formula.FormulaParser;
+import formula.Visitable;
+import formula.Visitor;
+import model.State;
 
-public class Not extends StateFormula {
+import java.util.Set;
+
+public class Not extends StateFormula implements Visitable {
     public final StateFormula stateFormula;
 
     public Not(StateFormula stateFormula) {
@@ -17,4 +22,8 @@ public class Not extends StateFormula {
         buffer.append(")");
     }
 
+    @Override
+    public Set<State> accept(Visitor visitor, Set<State> states) {
+        return visitor.visitNot(this, states);
+    }
 }

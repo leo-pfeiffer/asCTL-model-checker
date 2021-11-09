@@ -1,6 +1,12 @@
 package formula.stateFormula;
 
-public class BoolProp extends StateFormula {
+import formula.Visitable;
+import formula.Visitor;
+import model.State;
+
+import java.util.Set;
+
+public class BoolProp extends StateFormula implements Visitable {
     public final boolean value;
 
     public BoolProp(boolean value) {
@@ -13,4 +19,8 @@ public class BoolProp extends StateFormula {
         buffer.append(" " + stringValue + " ");
     }
 
+    @Override
+    public Set<State> accept(Visitor visitor, Set<State> states) {
+        return visitor.visitBoolProp(this, states);
+    }
 }

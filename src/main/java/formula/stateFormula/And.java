@@ -1,6 +1,12 @@
 package formula.stateFormula;
 
-public class And extends StateFormula {
+import formula.Visitable;
+import formula.Visitor;
+import model.State;
+
+import java.util.Set;
+
+public class And extends StateFormula implements Visitable {
     public final StateFormula left;
     public final StateFormula right;
 
@@ -18,4 +24,8 @@ public class And extends StateFormula {
         buffer.append(")");
     }
 
+    @Override
+    public Set<State> accept(Visitor visitor, Set<State> states) {
+        return visitor.visitAnd(this, states);
+    }
 }
