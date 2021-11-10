@@ -2,9 +2,11 @@ package formula.pathFormula;
 
 import formula.*;
 import formula.stateFormula.*;
+import model.State;
+
 import java.util.Set;
 
-public class Until extends PathFormula {
+public class Until extends PathFormula implements Visitable{
     public final StateFormula left;
     public final StateFormula right;
     private Set<String> leftActions;
@@ -35,4 +37,8 @@ public class Until extends PathFormula {
         buffer.append(")");
     }
 
+    @Override
+    public Set<State> accept(Visitor visitor, Set<State> states) {
+        return visitor.visitUntil(this, states);
+    }
 }

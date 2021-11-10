@@ -1,9 +1,14 @@
 package formula.stateFormula;
 
 import formula.FormulaParser;
+import formula.Visitable;
+import formula.Visitor;
 import formula.pathFormula.PathFormula;
+import model.State;
 
-public class ThereExists extends StateFormula {
+import java.util.Set;
+
+public class ThereExists extends StateFormula implements Visitable {
     public final PathFormula pathFormula;
 
     public ThereExists(PathFormula pathFormula) {
@@ -16,5 +21,10 @@ public class ThereExists extends StateFormula {
         buffer.append(FormulaParser.THEREEXISTS_TOKEN);
         pathFormula.writeToBuffer(buffer);
         buffer.append(")");
+    }
+
+    @Override
+    public Set<State> accept(Visitor visitor, Set<State> states) {
+        return visitor.visitThereExists(this, states);
     }
 }

@@ -17,7 +17,6 @@ public class Model {
         Model model = gson.fromJson(new FileReader(filePath), Model.class);
         for (Transition t : model.transitions) {
             System.out.println(t);
-            ;
         }
         return model;
     }
@@ -40,4 +39,12 @@ public class Model {
         return transitions;
     }
 
+    public State getStateByName(String name) {
+        for (State s : states) {
+            if (s.getName().equals(name)) {
+                return s;
+            }
+        }
+        return null;
+    }
 }
