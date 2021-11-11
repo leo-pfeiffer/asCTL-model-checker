@@ -22,6 +22,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static utils.SetOperations.*;
+
 /**
  * Compute satisfaction set for a model.
  * */
@@ -92,10 +94,7 @@ public class SatSetComputer implements Visitor {
         Set<State> satSetRight = computeSatSet(formula.right, states);
 
         // intersection of left and right
-        Set<State> conjunctionSet = new HashSet<>(satSetLeft);
-        conjunctionSet.retainAll(satSetRight);
-
-        return conjunctionSet;
+        return setIntersection(satSetLeft, satSetRight);
     }
 
     /**
@@ -104,10 +103,8 @@ public class SatSetComputer implements Visitor {
      * */
     @Override
     public Set<State> visitNot(Not formula, Set<State> states) {
-        Set<State> complement = new HashSet<>(states);
-        complement.removeAll(states);
-
-        return complement;
+        Set<State> satSet = computeSatSet(formula.stateFormula, states);
+        return setDifference(states, satSet);
     }
 
     /**
@@ -154,12 +151,38 @@ public class SatSetComputer implements Visitor {
      * */
     @Override
     public Set<State> visitUntil(Until formula, Set<State> states) {
+
+        // todo not sure if action index is handled correctly
+
+        // sat sets for left and right ignoring the action index
         Set<State> satSetLeft = computeSatSet(formula.left, states);
         Set<State> satSetRight = computeSatSet(formula.right, states);
 
-        // todo This one's tricky....
+        // consider action index
+        satSetLeft = this.satSetPostActions(satSetLeft, formula.getLeftActions());
+        satSetRight = this.satSetPreActions(satSetRight, formula.getRightActions());
 
-        return null;
+        // T := Sat(right)
+        Set<State> finalSatSet = new HashSet<>(satSetRight);
+
+        // while {s in Sat(left) w/o T | Post(s) intersect T != {}} != {} do
+        while (true) {
+
+            // {s in Sat(left) w/o T}
+            Set<State> satLeftPrime = setDifference(satSetLeft, finalSatSet);
+
+            // {satLeftPrime | Post(s) intersect T != {}}
+            Set<State> sub = this.postIntersectStatesNotEmpty(satLeftPrime);
+
+            if (sub.isEmpty()) {
+                break;
+            }
+
+            // T union {s}
+            finalSatSet.addAll(sub);
+        }
+
+        return finalSatSet;
     }
 
     /**
