@@ -121,7 +121,7 @@ public class ENFConverter {
      */
     public Not convertForAllAlways(Always formula) {
         // AG phi = !EF !phi = !E (true U phi)
-        Set<String> preActions = new HashSet<String>();
+        Set<String> preActions = new HashSet<>();
         Set<String> postActions = formula.getActions();
         Until until = new Until(new BoolProp(true), convertToENF(formula.stateFormula), preActions, postActions);
         return new Not(new ThereExists(until));
