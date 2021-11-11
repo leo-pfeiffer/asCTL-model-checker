@@ -31,8 +31,10 @@ public class manualTestClient {
 
             ModelChecker mc = new SimpleModelChecker();
 
-            // TO IMPLEMENT
-            // assertTrue(mc.check(model, fairnessConstraint, query));
+             boolean result = mc.check(model, fairnessConstraint, query);
+
+             int x = 0;
+
         } catch (IOException e) {
             e.printStackTrace();
             fail(e.toString());
