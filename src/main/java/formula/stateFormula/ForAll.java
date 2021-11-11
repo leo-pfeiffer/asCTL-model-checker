@@ -17,4 +17,9 @@ public class ForAll extends StateFormula {
         pathFormula.writeToBuffer(buffer);
         buffer.append(")");
     }
+
+    @Override
+    public StateFormula convertToENF(ENFConverter converter) {
+        return converter.convertForAll(this);
+    }
 }

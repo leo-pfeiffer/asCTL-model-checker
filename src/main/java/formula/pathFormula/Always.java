@@ -1,5 +1,6 @@
 package formula.pathFormula;
 
+import formula.ENFConverter;
 import formula.FormulaParser;
 import formula.Visitable;
 import formula.Visitor;
@@ -26,6 +27,17 @@ public class Always extends PathFormula implements Visitable {
         buffer.append(FormulaParser.ALWAYS_TOKEn);
         stateFormula.writeToBuffer(buffer);
     }
+
+    @Override
+    public StateFormula convertForAll(ENFConverter converter) {
+        return converter.convertForAllAlways(this);
+    }
+
+    @Override
+    public StateFormula convertThereExists(ENFConverter converter) {
+        return converter.convertThereExistsAlways(this);
+    }
+
 
     @Override
     public Set<State> accept(Visitor visitor, Set<State> states) {

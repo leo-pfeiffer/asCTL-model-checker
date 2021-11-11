@@ -1,5 +1,6 @@
 package formula.pathFormula;
 
+import formula.ENFConverter;
 import formula.FormulaParser;
 import formula.Visitable;
 import formula.Visitor;
@@ -26,6 +27,17 @@ public class Next extends PathFormula implements Visitable {
         buffer.append(FormulaParser.NEXT_TOKEN);
         stateFormula.writeToBuffer(buffer);
     }
+
+    @Override
+    public StateFormula convertForAll(ENFConverter converter) {
+        return converter.convertForAllNext(this);
+    }
+
+    @Override
+    public StateFormula convertThereExists(ENFConverter converter) {
+        return converter.convertThereExistsNext(this);
+    }
+
 
     @Override
     public Set<State> accept(Visitor visitor, Set<State> states) {

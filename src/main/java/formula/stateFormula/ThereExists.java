@@ -1,5 +1,6 @@
 package formula.stateFormula;
 
+import formula.ENFConverter;
 import formula.FormulaParser;
 import formula.Visitable;
 import formula.Visitor;
@@ -21,6 +22,11 @@ public class ThereExists extends StateFormula implements Visitable {
         buffer.append(FormulaParser.THEREEXISTS_TOKEN);
         pathFormula.writeToBuffer(buffer);
         buffer.append(")");
+    }
+
+    @Override
+    public StateFormula convertToENF(ENFConverter converter) {
+        return converter.convertThereExists(this);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package formula.pathFormula;
 
+import formula.ENFConverter;
 import formula.FormulaParser;
 import formula.stateFormula.*;
 import java.util.*;
@@ -30,5 +31,16 @@ public class Eventually extends PathFormula {
         stateFormula.writeToBuffer(buffer);
         ;
     }
+
+    @Override
+    public StateFormula convertForAll(ENFConverter converter) {
+        return converter.convertForAllEventually(this);
+    }
+
+    @Override
+    public StateFormula convertThereExists(ENFConverter converter) {
+        return converter.convertThereExistsEventually(this);
+    }
+
 
 }

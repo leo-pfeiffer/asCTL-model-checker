@@ -1,5 +1,6 @@
 package formula.stateFormula;
 
+import formula.ENFConverter;
 import formula.Visitable;
 import formula.Visitor;
 import model.State;
@@ -17,6 +18,11 @@ public class BoolProp extends StateFormula implements Visitable {
     public void writeToBuffer(StringBuilder buffer) {
         String stringValue = (value) ? "True" : "False";
         buffer.append(" " + stringValue + " ");
+    }
+
+    @Override
+    public StateFormula convertToENF(ENFConverter converter) {
+        return converter.convertBoolProp(this);
     }
 
     @Override

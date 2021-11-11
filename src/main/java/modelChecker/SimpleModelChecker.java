@@ -1,5 +1,6 @@
 package modelChecker;
 
+import formula.ENFConverter;
 import formula.stateFormula.And;
 import formula.stateFormula.StateFormula;
 import model.Model;
@@ -19,11 +20,13 @@ public class SimpleModelChecker implements ModelChecker {
             query = new And(constraint, query);
         }
 
-        // todo convert to ENF
+        // convert the formula ENF
+        ENFConverter enfConverter = new ENFConverter();
+        StateFormula enf = enfConverter.convertToENF(query);
 
         // get satisfying set
         SatSetComputer satSetComputer = new SatSetComputer(model);
-        Set<State> satSet = satSetComputer.computeSatSet(query, model.getStatesSet());
+        Set<State> satSet = satSetComputer.computeSatSet(enf, model.getStatesSet());
 
         // compare satSet to initial states
         boolean check = satSet.containsAll(model.getInitialStates());
@@ -35,7 +38,7 @@ public class SimpleModelChecker implements ModelChecker {
 
         // model is not valid...
         // todo generate trace and save to instance variable
-        System.out.println("Model is not valid whoopsie");
+        System.out.println("Whoops, model is not valid");
         return false;
     }
 

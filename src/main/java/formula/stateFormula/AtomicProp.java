@@ -1,5 +1,6 @@
 package formula.stateFormula;
 
+import formula.ENFConverter;
 import formula.Visitable;
 import formula.Visitor;
 import model.State;
@@ -16,6 +17,11 @@ public class AtomicProp extends StateFormula implements Visitable {
     @Override
     public void writeToBuffer(StringBuilder buffer) {
         buffer.append(" " + label + " ");
+    }
+
+    @Override
+    public StateFormula convertToENF(ENFConverter converter) {
+        return converter.convertAtomicProp(this);
     }
 
     @Override

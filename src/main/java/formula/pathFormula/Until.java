@@ -41,4 +41,15 @@ public class Until extends PathFormula implements Visitable{
     public Set<State> accept(Visitor visitor, Set<State> states) {
         return visitor.visitUntil(this, states);
     }
+
+    @Override
+    public StateFormula convertForAll(ENFConverter converter) {
+        return converter.convertForAllUntil(this);
+    }
+
+    @Override
+    public StateFormula convertThereExists(ENFConverter converter) {
+        return converter.convertThereExistsUntil(this);
+    }
+
 }

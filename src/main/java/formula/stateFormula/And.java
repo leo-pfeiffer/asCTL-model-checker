@@ -1,5 +1,6 @@
 package formula.stateFormula;
 
+import formula.ENFConverter;
 import formula.Visitable;
 import formula.Visitor;
 import model.State;
@@ -22,6 +23,11 @@ public class And extends StateFormula implements Visitable {
         buffer.append(" && ");
         right.writeToBuffer(buffer);
         buffer.append(")");
+    }
+
+    @Override
+    public StateFormula convertToENF(ENFConverter converter) {
+        return converter.convertAnd(this);
     }
 
     @Override
