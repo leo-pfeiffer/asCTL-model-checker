@@ -8,8 +8,6 @@ import org.junit.Test;
 
 import formula.FormulaParser;
 import formula.stateFormula.StateFormula;
-import modelChecker.ModelChecker;
-import modelChecker.SimpleModelChecker;
 import model.Model;
 
 public class ModelCheckerTest {
@@ -31,7 +29,7 @@ public class ModelCheckerTest {
             ModelChecker mc = new SimpleModelChecker();
 
             // TO IMPLEMENT
-            // assertTrue(mc.check(model, fairnessConstraint, query));
+            assertTrue(mc.check(model, fairnessConstraint, query));
         } catch (IOException e) {
             e.printStackTrace();
             fail(e.toString());
