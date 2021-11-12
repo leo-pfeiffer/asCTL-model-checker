@@ -13,7 +13,8 @@ public class SimpleModelChecker implements ModelChecker {
     @Override
     public boolean check(Model model, StateFormula constraint, StateFormula query) {
 
-        // todo what do we do if the model has terminal states?
+        // TODO: what do we do if the model has terminal states?
+        //  could I just add a self-loop?
 
         // handle constraint
         if (constraint != null) {
