@@ -135,7 +135,8 @@ public class SatSetComputer implements Visitor {
         satSet = this.satSetPreActions(satSet, formula.getActions());
 
         // {s in S | Post(s) intersect Sat(formula) != {}}
-        return this.postIntersectStatesNotEmpty(satSet);
+//        return this.postIntersectStatesNotEmpty(satSet);
+        return this.postIntersectStatesNotEmptyUpdated(this.model.getStatesSet(), satSet);
     }
 
     /**
@@ -168,11 +169,13 @@ public class SatSetComputer implements Visitor {
         // while {s in Sat(left) w/o T | Post(s) intersect T != {}} != {} do
         while (true) {
 
-            // {s in Sat(left) w/o T}
+            // satLeftPrime = {s in satLeft w/o T}
             Set<State> satLeftPrime = setDifference(satSetLeft, finalSatSet);
 
-            // {satLeftPrime | Post(s) intersect T != {}}
-            Set<State> sub = this.postIntersectStatesNotEmpty(satLeftPrime);
+            // {s in satLeftPrime | Post(s) intersect T != {}}
+            // Set<State> sub = this.postIntersectStatesNotEmpty(satLeftPrime);
+            // todo check if this is correct
+            Set<State> sub = this.postIntersectStatesNotEmptyUpdated(satLeftPrime, finalSatSet);
 
             if (sub.isEmpty()) {
                 break;
@@ -203,11 +206,15 @@ public class SatSetComputer implements Visitor {
         // filter the sat set of the state formula by the pre-actions
         satSet = this.satSetPreActions(satSet, formula.getActions());
 
+        // T := Sat(phi)
         Set<State> finalSatSet = new HashSet<>(satSet);
 
         while(true) {
             // {s in S}
-            Set<State> sub = this.postIntersectStatesNotEmpty(finalSatSet);
+            // Set<State> sub = this.postIntersectStatesNotEmpty(finalSatSet);
+            // {s in T | Post(s) ∩ T = {}};
+            // todo check if this is correct
+            Set<State> sub = this.postIntersectStatesEmpty(finalSatSet, finalSatSet);
 
             if (sub.isEmpty()) {
                 break;
@@ -298,15 +305,54 @@ public class SatSetComputer implements Visitor {
     /**
      * Helper method to compute sets of the sort
      * {s in S | Post(s) intersect T != {}}
-     * given the set of states S.
+     * given the set of all states S and the intersection set T.
      * @param states S
      * @return {s in S | Post(s) intersect T != {}}
      * */
     private Set<State> postIntersectStatesNotEmpty(Set<State> states) {
+        // todo
         Set<State> sub = new HashSet<>();
         for (State state : states) {
             Set<State> postSet = state.getPostStates(states, this.model);
             if (!Collections.disjoint(postSet, states)) {
+                sub.add(state);
+            }
+        }
+        return sub;
+    }
+
+    /**
+     * Helper method to compute sets of the sort
+     * {s in S | Post(s) intersect T != {}}
+     * given the set of all states S and the intersection set T.
+     * @param S S
+     * @param T T
+     * @return {s in S | Post(s) intersect T != {}}
+     * */
+    private Set<State> postIntersectStatesNotEmptyUpdated(Set<State> S, Set<State> T) {
+        Set<State> sub = new HashSet<>();
+        for (State state : S) {
+            Set<State> postSet = state.getPostStates(S, this.model);
+            if (!Collections.disjoint(postSet, T)) {
+                sub.add(state);
+            }
+        }
+        return sub;
+    }
+
+    /**
+     * Helper method to compute sets of the sort
+     * {s in S | Post(s) intersect T = {}}
+     * given the set of all states S and the intersection set T.
+     * @param S S
+     * @param T T
+     * @return {s in S | Post(s) intersect T = {}}
+     * */
+    private Set<State> postIntersectStatesEmpty(Set<State> S, Set<State> T) {
+        Set<State> sub = new HashSet<>();
+        for (State state : S) {
+            Set<State> postSet = state.getPostStates(S, this.model);
+            if (Collections.disjoint(postSet, T)) {
                 sub.add(state);
             }
         }
