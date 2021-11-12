@@ -19,9 +19,10 @@ import model.Transition;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static utils.SetOperations.*;
 
@@ -129,6 +130,8 @@ public class SatSetComputer implements Visitor {
     @Override
     public Set<State> visitNext(Next formula, Set<State> states) {
 
+        // todo remove redundant declarations.. just for debugging
+
         // compute the sat set for the state formula first
         Set<State> satSetOrig = computeSatSet(formula.stateFormula, states);
 
@@ -210,28 +213,68 @@ public class SatSetComputer implements Visitor {
      * */
     @Override
     public Set<State> visitAlways(Always formula, Set<State> states) {
-        Set<State> satSet = computeSatSet(formula.stateFormula, states);
 
-        // filter the sat set of the state formula by the pre-actions
-        satSet = this.satSetPreActions(satSet, formula.getActions());
+        // todo remove redundant declarations.. just for debugging
+
+        Set<State> satSetOrig = computeSatSet(formula.stateFormula, states);
+
+        // remove from the sat set those states that cannot be reached with the pre-actions
+        Set<State> satSetPre = this.satSetPreActions(satSetOrig, formula.getActions());
+
+        // todo
+        //  Somewhere in here, I forgot to filter by the actions:
+        //  Set<State> filtered = this.satSetPostActions(satSetPre, formula.getActions());
+        //  see also below
 
         // T := Sat(phi)
-        Set<State> finalSatSet = new HashSet<>(satSet);
+        Set<State> finalSatSet = new HashSet<>(satSetPre);
+        Set<State> sub = new HashSet<>();
 
         while(true) {
-            // {s in S}
-            // Set<State> sub = this.postIntersectStatesNotEmpty(finalSatSet);
+
             // {s in T | Post(s) ∩ T = {}};
-            // todo check if this is correct
-            Set<State> sub = this.postIntersectStatesEmpty(finalSatSet, finalSatSet);
+            for (State state : finalSatSet) {
+                Set<State> postSet = state.getPostStates(model);
+                // todo maybe here I need to filter, who knows, this sucks
+                if (Collections.disjoint(postSet, finalSatSet)) {
+                    sub.add(state);
+                }
+            }
 
             if (sub.isEmpty()) {
                 break;
             }
+
             // T := T w/o {s}
             finalSatSet.removeAll(sub);
+
         }
         return finalSatSet;
+    }
+
+    // Algorithm 16.. maybe an alternative?
+    public Set<State> visitAlways2(Always formula, Set<State> states) {
+        Set<State> satSet = computeSatSet(formula.stateFormula, states);
+        Set<State> E = setDifference(states, satSet);
+        Set<State> T = new HashSet<>(satSet);
+        HashMap<State, Integer> count = new HashMap<>();
+        for (State state : satSet) {
+            count.put(state, state.getPostStates(model).size());
+        }
+
+        Iterator<State> iterator = E.iterator();
+        while (iterator.hasNext()) {
+            State sPrime = iterator.next();
+            iterator.remove();
+            for (State state : T) {
+                count.put(state, count.get(state) - 1);
+                if (count.get(state) == 0) {
+                    T.remove(state);
+                    E.add(state);
+                }
+            }
+        }
+        return T;
     }
 
     /**
@@ -321,27 +364,8 @@ public class SatSetComputer implements Visitor {
     private Set<State> postIntersectStatesNotEmpty(Set<State> S, Set<State> T) {
         Set<State> sub = new HashSet<>();
         for (State state : S) {
-            Set<State> postSet = state.getPostStates(S, this.model);
+            Set<State> postSet = state.getPostStates(this.model);
             if (!Collections.disjoint(postSet, T)) {
-                sub.add(state);
-            }
-        }
-        return sub;
-    }
-
-    /**
-     * Helper method to compute sets of the sort
-     * {s in S | Post(s) intersect T = {}}
-     * given the set of all states S and the intersection set T.
-     * @param S S
-     * @param T T
-     * @return {s in S | Post(s) intersect T = {}}
-     * */
-    private Set<State> postIntersectStatesEmpty(Set<State> S, Set<State> T) {
-        Set<State> sub = new HashSet<>();
-        for (State state : S) {
-            Set<State> postSet = state.getPostStates(S, this.model);
-            if (Collections.disjoint(postSet, T)) {
                 sub.add(state);
             }
         }

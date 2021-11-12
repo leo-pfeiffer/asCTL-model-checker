@@ -67,11 +67,10 @@ public class State {
 
     /**
      * Get all post states (successors) of this state
-     * @param states todo
      * @param model Model to get the states from
      * @return Set of post states
      */
-    public Set<State> getPostStates(Set<State> states, Model model) {
+    public Set<State> getPostStates(Model model) {
         // todo see if I can use states instead of model.getStates()
         Set<State> postStates = new HashSet<>();
         for (Transition transition: this.getOutgoingTransitions(model)) {
