@@ -1,6 +1,8 @@
 package model;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Each transition may have a set of actions to be performed. 
@@ -31,6 +33,14 @@ public class  Transition {
      * */
     public String[] getActions() {
 	return actions;
+    }
+
+    /**
+     * Returns the set of actions in a transition as a set
+     * @return a set of actions.
+     * */
+    public Set<String> getActionsSet() {
+        return new HashSet<>(Arrays.asList(actions));
     }
 	
     @Override

@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static utils.SetOperations.*;
 
@@ -129,14 +130,22 @@ public class SatSetComputer implements Visitor {
     public Set<State> visitNext(Next formula, Set<State> states) {
 
         // compute the sat set for the state formula first
-        Set<State> satSet = computeSatSet(formula.stateFormula, states);
+        Set<State> satSetOrig = computeSatSet(formula.stateFormula, states);
 
-        // filter the sat set of the state formula by the pre-actions
-        satSet = this.satSetPreActions(satSet, formula.getActions());
+        // remove from the sat set the states that cannot be reached via the pre-actions
+        Set<State> satSetPre = this.satSetPreActions(satSetOrig, formula.getActions());
 
         // {s in S | Post(s) intersect Sat(formula) != {}}
-//        return this.postIntersectStatesNotEmpty(satSet);
-        return this.postIntersectStatesNotEmptyUpdated(this.model.getStatesSet(), satSet);
+        // all predecessors of the states in the sat set
+        Set<State> satSetFiltered = this.postIntersectStatesNotEmpty(this.model.getStatesSet(), satSetPre);
+
+        // todo revise idea:
+        //  filter the sat set returned from the last call by all those states that are actually
+        //  transitioning via the required action.
+        //  i.e. basically do the reverse of what satSetPreActions does
+        Set<State> filtered = this.satSetPostActions(satSetFiltered, formula.getActions());
+
+        return filtered;
     }
 
     /**
@@ -175,7 +184,7 @@ public class SatSetComputer implements Visitor {
             // {s in satLeftPrime | Post(s) intersect T != {}}
             // Set<State> sub = this.postIntersectStatesNotEmpty(satLeftPrime);
             // todo check if this is correct
-            Set<State> sub = this.postIntersectStatesNotEmptyUpdated(satLeftPrime, finalSatSet);
+            Set<State> sub = this.postIntersectStatesNotEmpty(satLeftPrime, finalSatSet);
 
             if (sub.isEmpty()) {
                 break;
@@ -227,13 +236,12 @@ public class SatSetComputer implements Visitor {
 
     /**
      * From a set of states, get the ones that satisfy the pre-actions.
+     * Basically, this retains all states that can be reached via the pre-actions.
      * @param states set of states
      * @param actions set of actions from the pre-actions
      * @return set of states that satisfy the pre-actions
      * */
     private Set<State> satSetPreActions(Set<State> states, Set<String> actions) {
-
-        // todo test this although I think it should work
 
         // nothing to do if there are no pre-actions
         if (actions.isEmpty()) {
@@ -306,30 +314,11 @@ public class SatSetComputer implements Visitor {
      * Helper method to compute sets of the sort
      * {s in S | Post(s) intersect T != {}}
      * given the set of all states S and the intersection set T.
-     * @param states S
-     * @return {s in S | Post(s) intersect T != {}}
-     * */
-    private Set<State> postIntersectStatesNotEmpty(Set<State> states) {
-        // todo
-        Set<State> sub = new HashSet<>();
-        for (State state : states) {
-            Set<State> postSet = state.getPostStates(states, this.model);
-            if (!Collections.disjoint(postSet, states)) {
-                sub.add(state);
-            }
-        }
-        return sub;
-    }
-
-    /**
-     * Helper method to compute sets of the sort
-     * {s in S | Post(s) intersect T != {}}
-     * given the set of all states S and the intersection set T.
      * @param S S
      * @param T T
      * @return {s in S | Post(s) intersect T != {}}
      * */
-    private Set<State> postIntersectStatesNotEmptyUpdated(Set<State> S, Set<State> T) {
+    private Set<State> postIntersectStatesNotEmpty(Set<State> S, Set<State> T) {
         Set<State> sub = new HashSet<>();
         for (State state : S) {
             Set<State> postSet = state.getPostStates(S, this.model);

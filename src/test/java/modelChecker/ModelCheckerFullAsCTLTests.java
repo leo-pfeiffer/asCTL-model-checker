@@ -6,6 +6,9 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+/**
+ * Unit tests to test more complicated asCTL formulae.
+ * */
 public class ModelCheckerFullAsCTLTests {
 
     @Test
