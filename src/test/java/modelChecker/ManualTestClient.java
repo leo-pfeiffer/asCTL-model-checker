@@ -8,10 +8,10 @@ import java.io.IOException;
 
 import static org.junit.Assert.fail;
 
-public class manualTestClient {
+public class ManualTestClient {
 
     public static void main(String[] args) {
-        manualTestClient test = new manualTestClient();
+        ManualTestClient test = new ManualTestClient();
         test.buildAndCheckModel();
         int x = 0;
     }
