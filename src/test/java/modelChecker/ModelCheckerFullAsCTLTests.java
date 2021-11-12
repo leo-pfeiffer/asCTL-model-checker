@@ -1,14 +1,10 @@
 package modelChecker;
 
-import static org.junit.Assert.*;
-
 import java.io.IOException;
 
-import org.junit.Test;
+import static org.junit.Assert.*;
 
-import formula.FormulaParser;
-import formula.stateFormula.StateFormula;
-import model.Model;
+import org.junit.Test;
 
 public class ModelCheckerFullAsCTLTests {
 

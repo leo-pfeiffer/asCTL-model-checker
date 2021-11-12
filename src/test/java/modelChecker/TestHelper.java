@@ -17,7 +17,7 @@ public class TestHelper {
 
             StateFormula fairnessConstraint = null;
             if (constraintName != null) {
-                fairnessConstraint = new FormulaParser("src/test/resources/test-constraints" + constraintName + ".json").parse();
+                fairnessConstraint = new FormulaParser("src/test/resources/test-constraints/" + constraintName + ".json").parse();
             }
 
             ModelChecker mc = new SimpleModelChecker();
