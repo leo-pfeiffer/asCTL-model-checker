@@ -43,13 +43,43 @@ public class ModelCheckerSimpleAsCTLTests {
     public void model4_exists_always() {
         try {
             boolean result1 = TestHelper.check("model4", "asCTL_exists_always_true", null);
-//            assertTrue(result1);
+            assertTrue(result1);
 
             boolean result2 = TestHelper.check("model4", "asCTL_exists_always_false", null);
-//            assertFalse(result2);
+            assertFalse(result2);
         } catch (IOException e) {
             e.printStackTrace();
             fail(e.toString());
         }
     }
+
+    @Test
+    public void model4_forall_always() {
+        try {
+            // todo not passing
+            boolean result1 = TestHelper.check("model4", "asCTL_forall_always_true", null);
+            assertTrue(result1);
+
+            boolean result2 = TestHelper.check("model4", "asCTL_forall_always_false", null);
+            assertFalse(result2);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail(e.toString());
+        }
+    }
+
+    @Test
+    public void model4_forall_until() {
+        try {
+            boolean result1 = TestHelper.check("model4", "asCTL_forall_until_true", null);
+            assertTrue(result1);
+
+            boolean result2 = TestHelper.check("model4", "asCTL_forall_until_false", null);
+            assertFalse(result2);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail(e.toString());
+        }
+    }
+
 }

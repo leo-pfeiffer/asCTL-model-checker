@@ -71,11 +71,23 @@ public class State {
      * @return Set of post states
      */
     public Set<State> getPostStates(Model model) {
-        // todo see if I can use states instead of model.getStates()
         Set<State> postStates = new HashSet<>();
         for (Transition transition: this.getOutgoingTransitions(model)) {
             postStates.add(model.getStateByName(transition.getTarget()));
         }
         return postStates;
+    }
+
+    /**
+     * Get all pre states (predecessors) of this state
+     * @param model Model to get the states from
+     * @return Set of pre states
+     */
+    public Set<State> getPreStates(Model model) {
+        Set<State> preStates = new HashSet<>();
+        for (Transition transition: this.getIncomingTransitions(model)) {
+            preStates.add(model.getStateByName(transition.getSource()));
+        }
+        return preStates;
     }
 }

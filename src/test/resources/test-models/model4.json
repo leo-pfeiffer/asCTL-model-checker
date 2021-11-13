@@ -18,14 +18,14 @@
     {
       "init": false,
       "name": "s3",
-      "label": ["a"]
+      "label": ["a", "d"]
     }
   ],
   "transitions": [
     {
       "source": "s0",
       "target": "s1",
-      "actions": ["act1"]
+      "actions": ["act1", "act5"]
     },
     {
       "source": "s1",
@@ -35,7 +35,7 @@
     {
       "source": "s1",
       "target": "s3",
-      "actions": ["act1"]
+      "actions": ["act1", "act4"]
     },
     {
       "source": "s3",

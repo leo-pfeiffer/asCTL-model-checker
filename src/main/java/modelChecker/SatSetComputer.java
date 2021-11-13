@@ -182,10 +182,11 @@ public class SatSetComputer implements Visitor {
         while (true) {
 
             // satLeftPrime = {s in satLeft w/o T}
+            // states from satLeft that are not in finalSatSet (yet)
             Set<State> satLeftPrime = setDifference(satSetLeft, finalSatSet);
 
             // {s in satLeftPrime | Post(s) intersect T != {}}
-            // Set<State> sub = this.postIntersectStatesNotEmpty(satLeftPrime);
+            // remove those from satLeftPrime that don't have successors in finalSatSet
             // todo check if this is correct
             Set<State> sub = this.postIntersectStatesNotEmpty(satLeftPrime, finalSatSet);
 
@@ -200,16 +201,159 @@ public class SatSetComputer implements Visitor {
         return finalSatSet;
     }
 
+    //@Override
+    public Set<State> visitUntilUpdated(Until formula, Set<State> states) {
+
+        // sat sets for left and right ignoring the action index
+        Set<State> satSetLeft = computeSatSet(formula.left, states);
+        Set<State> satSetRight = computeSatSet(formula.right, states);
+
+        // consider action index
+        satSetLeft = this.satSetPostActions(satSetLeft, formula.getLeftActions());
+        satSetRight = this.satSetPreActions(satSetRight, formula.getRightActions());
+
+        // todo don't know if I need to do this
+        //  basically, this removes all states from satSetLeft that cannot reach satSetRight via left actions
+//        if (!satSetLeft.isEmpty()) {
+//            Set<State> remove = new HashSet<>();
+//            for (State s : satSetLeft) {
+//                boolean retain = false;
+//                for (State sr : satSetRight) {
+//                    for (Transition t : s.getOutgoingTransitions(model)) {
+//                        boolean sourceMatch = t.getSource().equals(s.getName());
+//                        boolean targetMatch = t.getTarget().equals(sr.getName());
+//                        boolean actionsMatch = !Collections.disjoint(t.getActionsSet(), formula.getLeftActions());
+//                        if (sourceMatch && targetMatch && actionsMatch) {
+//                            retain = true;
+//                            break;
+//                        }
+//                    }
+//                    if (retain) {
+//                        break;
+//                    }
+//                }
+//                if (!retain) {
+//                    remove.add(s);
+//                }
+//            }
+//            satSetLeft.removeAll(remove);
+//        }
+
+        // T := Sat(right)
+        Set<State> finalSatSet = new HashSet<>(satSetRight);
+
+        // while {s in Sat(left) w/o T | Post(s) intersect T != {}} != {} do
+        while (true) {
+
+            // satLeftPrime = {s in satLeft w/o T}
+            Set<State> satLeftPrime = setDifference(satSetLeft, finalSatSet);
+
+            // states to remove from satLeftPrime because the actions don't match
+            Set<State> sub = new HashSet<>();
+
+            for (State state : satLeftPrime) {
+                Set<State> postStates = state.getPostStates(model);
+
+                // should the current state be retained?
+                boolean retain = false;
+
+                // check all postStates to find if the actions match
+                for (State postState : postStates) {
+                    // postStates of satSetRight states must be reachable by right actions
+                    if (satSetRight.contains(postState) && !formula.getRightActions().isEmpty()) {
+
+                        // incoming transitions into postState from state
+                        for (Transition transition : postState.getIncomingTransitions(model)) {
+
+                            boolean sourceMatch = transition.getSource().equals(state.getName());
+                            boolean targetMatch = transition.getTarget().equals(postState.getName());
+                            boolean actionsMatch = !Collections.disjoint(transition.getActionsSet(), formula.getRightActions());
+
+                            // source must match state, target must match postState, actions must include at least one right action
+                            if (sourceMatch && targetMatch && actionsMatch) {
+                                retain = true;
+                                break;
+                            }
+                        }
+                        // already found a reason to retain -> no need to look at other post states
+                        if (retain) {
+                            break;
+                        }
+                    }
+
+                    // postStates of satSetLeft states must be reachable by left actions
+                    if (satSetLeft.contains(postState) && !formula.getRightActions().isEmpty()) {
+
+                        // incoming transitions into postState from state
+                        for (Transition transition : postState.getIncomingTransitions(model)) {
+                            boolean sourceMatch = transition.getSource().equals(state.getName());
+                            boolean targetMatch = transition.getTarget().equals(postState.getName());
+                            boolean actionsMatch = !Collections.disjoint(transition.getActionsSet(), formula.getLeftActions());
+
+                            // source must match state, target must match postState, actions must include at least one left action
+                            if (sourceMatch && targetMatch && actionsMatch) {
+                                retain = true;
+                                break;
+                            }
+                        }
+                        // already found a reason to retain -> no need to look at other postStates
+                        if (retain) {
+                            break;
+                        }
+                    }
+                }
+
+                // no reason to retain -> add to sub for removal
+                if (!retain) {
+                    sub.add(state);
+                }
+            }
+
+            satLeftPrime.removeAll(sub);
+
+            if (satLeftPrime.isEmpty()) {
+                break;
+            }
+
+            finalSatSet.addAll(satLeftPrime);
+        }
+
+        return finalSatSet;
+    }
+
+    // Algorithm 15... maybe an alternative for until?
+    public Set<State> visitUntilAlternative(Until formula, Set<State> states) {
+        Set<State> satSetLeft = computeSatSet(formula.left, states);
+        Set<State> E = computeSatSet(formula.right, states);
+        Set<State> T = new HashSet<>(E);
+
+        while (!E.isEmpty()) {
+            State sPrime = E.iterator().next();
+            E.remove(sPrime);
+            for (State s : sPrime.getPreStates(model)) {
+                if (setDifference(satSetLeft, T).contains(s)) {
+                    E.add(sPrime);
+                    T.add(sPrime);
+                }
+            }
+        }
+        return T;
+    }
+
     /**
      * Sat Set for Always.
      *
      * ALGORITHM:
      * T := Sat(phi)
-     * while {s in T | Post(s) intersect T != {}} != {} do:
-     *      let s in {s in T | Post(s) intersect T != {}};
+     * while {s in T | Post(s) intersect T = {}} != {} do:
+     *      let s in {s in T | Post(s) intersect T = {}};
      *      T := T w/o {s};
      * od;
      * SatSet = T;
+     *
+     * From the original sat set Sat(phi), remove al those states whose successors are not in the sat set.
+     * By removing from the original sat set those states who violate the action preconditions, we can
+     * follow the same approach and get our desired set.
      * */
     @Override
     public Set<State> visitAlways(Always formula, Set<State> states) {
@@ -218,16 +362,12 @@ public class SatSetComputer implements Visitor {
 
         Set<State> satSetOrig = computeSatSet(formula.stateFormula, states);
 
-        // remove from the sat set those states that cannot be reached with the pre-actions
-        Set<State> satSetPre = this.satSetPreActions(satSetOrig, formula.getActions());
-
-        // todo
-        //  Somewhere in here, I forgot to filter by the actions:
-        //  Set<State> filtered = this.satSetPostActions(satSetPre, formula.getActions());
-        //  see also below
+        // remove from the sat set those states that cannot be reached with the actions
+        Set<State> satSetPost = this.satSetPostActions(satSetOrig, formula.getActions());
 
         // T := Sat(phi)
-        Set<State> finalSatSet = new HashSet<>(satSetPre);
+        // Set<State> finalSatSet = new HashSet<>(satSetPre);
+        Set<State> finalSatSet = new HashSet<>(satSetPost);
         Set<State> sub = new HashSet<>();
 
         while(true) {
@@ -235,9 +375,31 @@ public class SatSetComputer implements Visitor {
             // {s in T | Post(s) ∩ T = {}};
             for (State state : finalSatSet) {
                 Set<State> postSet = state.getPostStates(model);
-                // todo maybe here I need to filter, who knows, this sucks
                 if (Collections.disjoint(postSet, finalSatSet)) {
                     sub.add(state);
+                }
+                // even if the post set is in the sat set, remove it if we can't reach that successor using the post-actions
+                else if (!formula.getActions().isEmpty()) {
+                    boolean retain = false;
+                    for (State postState : setIntersection(postSet, finalSatSet)) {
+                        // transitions from state to postState
+                        for (Transition transition : state.getOutgoingTransitions(model)) {
+                            // only consider transitions that lead to postState
+                            if (transition.getTarget().equals(postState.getName())) {
+                                // if we can get from the state to the postState using the post-actions
+                                if (!Collections.disjoint(transition.getActionsSet(), formula.getActions())) {
+                                    retain = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (retain) {
+                            break;
+                        }
+                    }
+                    if (!retain) {
+                        sub.add(state);
+                    }
                 }
             }
 
@@ -248,31 +410,37 @@ public class SatSetComputer implements Visitor {
             // T := T w/o {s}
             finalSatSet.removeAll(sub);
 
+            if (finalSatSet.isEmpty()) {
+                break;
+            }
+
         }
         return finalSatSet;
     }
 
-    // Algorithm 16.. maybe an alternative?
-    public Set<State> visitAlways2(Always formula, Set<State> states) {
+    // Algorithm 16... maybe an alternative?
+    public Set<State> visitAlwaysAlternative(Always formula, Set<State> states) {
         Set<State> satSet = computeSatSet(formula.stateFormula, states);
         Set<State> E = setDifference(states, satSet);
         Set<State> T = new HashSet<>(satSet);
         HashMap<State, Integer> count = new HashMap<>();
+
         for (State state : satSet) {
             count.put(state, state.getPostStates(model).size());
         }
 
-        Iterator<State> iterator = E.iterator();
-        while (iterator.hasNext()) {
-            State sPrime = iterator.next();
-            iterator.remove();
+        while (!E.isEmpty()) {
+            State sPrime = E.iterator().next();
+            E.remove(sPrime);
+            Set<State> removeFromT = new HashSet<>();
             for (State state : T) {
                 count.put(state, count.get(state) - 1);
                 if (count.get(state) == 0) {
-                    T.remove(state);
+                    removeFromT.add(state);
                     E.add(state);
                 }
             }
+            T.removeAll(removeFromT);
         }
         return T;
     }
@@ -291,6 +459,7 @@ public class SatSetComputer implements Visitor {
             return states;
         }
 
+        // subset of states that is reachable via the pre-actions
         Set<State> filteredStates = new HashSet<>();
         for (State state : states) {
 
@@ -301,10 +470,8 @@ public class SatSetComputer implements Visitor {
             boolean retain = false;
             for (Transition transition : incomingTransitions) {
 
-                Set<String> transitionActions = new HashSet<>(Arrays.asList(transition.getActions()));
-
                 // if transition contains correct action, then we're done
-                if (!Collections.disjoint(actions, transitionActions)) {
+                if (!Collections.disjoint(actions, transition.getActionsSet())) {
                     retain = true;
                     break;
                 }
@@ -318,15 +485,20 @@ public class SatSetComputer implements Visitor {
         return filteredStates;
     }
 
+    /**
+     * Retains all states whose has any outgoing transitions that satisfy the post-actions.
+     * @param states set of states
+     * @param actions set of post-actions
+     * @return set of states that satisfy the post-actions
+     * */
     private Set<State> satSetPostActions(Set<State> states, Set<String> actions) {
-
-        // todo test this
 
         // nothing to do if there are no post-actions
         if (actions.isEmpty()) {
             return states;
         }
 
+        // subset of states that has includes the post-actions
         Set<State> filteredStates = new HashSet<>();
 
         for (State state : states) {
@@ -338,10 +510,8 @@ public class SatSetComputer implements Visitor {
             boolean retain = false;
             for (Transition transition : outgoingTransitions) {
 
-                Set<String> transitionActions = new HashSet<>(Arrays.asList(transition.getActions()));
-
                 // if transition contains correct action, then we're done
-                if (!Collections.disjoint(actions, transitionActions)) {
+                if (!Collections.disjoint(actions, transition.getActionsSet())) {
                     retain = true;
                     break;
                 }
