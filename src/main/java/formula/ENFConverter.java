@@ -17,10 +17,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Convert a state formula to existential normal form (ENF).
+ * Convert a state formula to existential normal form (ENF) for CTL:
  * For a in AP, the set of state formulae in ENF is given by
  * phi ::= true | a | phi1 & phi2 | !phi | EX phi | E (phi1 U phi2) | EG phi
  * See: Baier and Katoen (2008). Principles of Model Checking. (p. 332)
+ *
+ * This is extended to asCTL as explained in the report
  * */
 public class ENFConverter {
 
