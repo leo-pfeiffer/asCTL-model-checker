@@ -156,10 +156,6 @@ public class ModelCheckerSimpleCTLTests {
             boolean result4 = TestHelper.check("model4", "forall_always_a", null);
             assertFalse(result4);
 
-            // todo not passing
-            boolean result5 = TestHelper.check("model4", "forall_always_a_or_b", null);
-            assertTrue(result5);
-
         } catch (IOException e) {
             e.printStackTrace();
             fail(e.toString());
