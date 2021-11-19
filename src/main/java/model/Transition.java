@@ -46,8 +46,8 @@ public class  Transition {
     @Override
     public String toString() {
 	StringBuilder sb = new StringBuilder();
-	sb.append(this.source+"-");
-	sb.append(Arrays.toString(this.actions)+"-");
+	sb.append(this.source).append("-");
+	sb.append(Arrays.toString(this.actions)).append("-");
 	sb.append(this.target);
 	return sb.toString();
     }

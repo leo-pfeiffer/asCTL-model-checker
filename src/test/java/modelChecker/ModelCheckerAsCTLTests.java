@@ -45,10 +45,12 @@ public class ModelCheckerAsCTLTests {
     @Test
     public void model_exists_always() {
         try {
+            // not passing
             // "formula": "E pG (a)", "p": ["act1", "act3"]
             boolean result1 = TestHelper.check("model", "asCTL_exists_always_true", null);
             assertTrue(result1);
 
+            // passing
             // "formula": "E pG (a)", "p": ["act1"]
             boolean result2 = TestHelper.check("model", "asCTL_exists_always_false", null);
             assertFalse(result2);
@@ -62,10 +64,12 @@ public class ModelCheckerAsCTLTests {
     @Test
     public void model_forall_always() {
         try {
+            // passing
             // "formula": "A pG (a || b)", "p": ["act1", "act2", "act3"]
             boolean result1 = TestHelper.check("model", "asCTL_forall_always_true", null);
             assertTrue(result1);
 
+            // passing
             // "formula": "A pG (b))", "p": ["act1"]
             boolean result2 = TestHelper.check("model", "asCTL_forall_always_false", null);
             assertFalse(result2);

@@ -11,7 +11,7 @@ import java.util.*;
 
 public class Always extends PathFormula implements Visitable {
     public final StateFormula stateFormula;
-    private Set<String> actions = new HashSet<String>();
+    private Set<String> actions = new HashSet<>();
 
     public Always(StateFormula stateFormula, Set<String> actions) {
         this.stateFormula = stateFormula;

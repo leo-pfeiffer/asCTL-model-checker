@@ -1,6 +1,5 @@
 package formula;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import formula.pathFormula.Always;
 import formula.pathFormula.Eventually;
 import formula.pathFormula.Next;

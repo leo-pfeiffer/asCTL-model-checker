@@ -7,7 +7,7 @@ import java.io.IOException;
 import org.junit.Test;
 
 /**
- * Unit tests to test simple CTL formulae (without action indexing).
+ * Unit tests to test CTL formulae (without action indexing).
  * */
 public class ModelCheckerCTLTests {
 

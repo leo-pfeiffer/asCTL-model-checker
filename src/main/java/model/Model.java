@@ -14,8 +14,6 @@ import com.google.gson.Gson;
 public class Model {
     State[] states;
     Transition[] transitions;
-    // todo Set<State> initialStates;
-    // todo Set<State> stateSet;
 
     public static Model parseModel(String filePath) throws IOException {
         Gson gson = new Gson();
@@ -42,7 +40,6 @@ public class Model {
      * @return set of states for the given model
      */
     public Set<State> getStatesSet() {
-        // todo calculate this once at the beginning instead of on the fly
         Set<State> states = new HashSet<>();
         Collections.addAll(states, this.states);
         return states;
@@ -67,7 +64,6 @@ public class Model {
     }
 
     public Set<State> getInitialStates() {
-        // todo calculate this once at the beginning instead of on the fly
         Set<State> initialStates = new HashSet<>();
         for (State s : states) {
             if (s.isInit()) {

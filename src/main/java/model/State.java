@@ -1,6 +1,5 @@
 package model;
 
-import javax.swing.*;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -80,10 +79,6 @@ public class State {
         return postStates;
     }
 
-    public Set<State> getPostStatesWithActions(Model model, Set<String> actions) {
-        return null;
-    }
-
     /**
      * Get all pre states (predecessors) of this state
      * @param model Model to get the states from
@@ -97,6 +92,11 @@ public class State {
         return preStates;
     }
 
+    /**
+     * Get the set of predecessors that can reach this state via a set of actions.
+     * @param model Model to get the states from
+     * @param actions Set of actions to reach this state
+     * */
     public Set<State> getPreStatesWithActions(Model model, Set<String> actions) {
         Set<State> preStates = this.getPreStates(model);
         if (actions.isEmpty()) {
@@ -114,24 +114,6 @@ public class State {
         }
         preStates.removeAll(toRemove);
         return preStates;
-    }
-
-    public Set<String> getOutgoingActions(Model model) {
-        Set<Transition> out = this.getOutgoingTransitions(model);
-        Set<String> actions = new HashSet<>();
-        for (Transition t: out) {
-            actions.addAll(t.getActionsSet());
-        }
-        return actions;
-    }
-
-    public Set<String> getIncomingActions(Model model) {
-        Set<Transition> in = this.getIncomingTransitions(model);
-        Set<String> actions = new HashSet<>();
-        for (Transition t: in) {
-            actions.addAll(t.getActionsSet());
-        }
-        return actions;
     }
 
     @Override
