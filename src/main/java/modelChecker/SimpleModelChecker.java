@@ -13,9 +13,6 @@ public class SimpleModelChecker implements ModelChecker {
     @Override
     public boolean check(Model model, StateFormula constraint, StateFormula query) {
 
-        // TODO: what do we do if the model has terminal states?
-        //  could I just add a self-loop?
-
         // handle constraint
         if (constraint != null) {
             query = new And(constraint, query);
@@ -37,9 +34,14 @@ public class SimpleModelChecker implements ModelChecker {
             return true;
         }
 
-        // model is not valid...
-        // todo generate trace and save to instance variable
-        System.out.println("Whoops, model is not valid");
+        // model is not valid.
+
+        System.out.println("Model is not valid");
+
+        CounterexampleGenerator counterexampleGenerator = new CounterexampleGenerator();
+        // todo not implemented!
+        // counterexampleGenerator.generate();
+
         return false;
     }
 
