@@ -45,9 +45,11 @@ public class ModelCheckerSimpleAsCTLTests {
     @Test
     public void model4_exists_always() {
         try {
+            // "formula": "E pG (a)", "p": ["act1", "act3"]
             boolean result1 = TestHelper.check("model4", "asCTL_exists_always_true", null);
             assertTrue(result1);
 
+            // "formula": "E pG (a)", "p": ["act1"]
             boolean result2 = TestHelper.check("model4", "asCTL_exists_always_false", null);
             assertFalse(result2);
         } catch (IOException e) {
@@ -56,14 +58,16 @@ public class ModelCheckerSimpleAsCTLTests {
         }
     }
 
-    // todo not passing -> uses until
+    // todo not passing
     @Test
     public void model4_forall_always() {
         try {
             // todo not passing
+            // "formula": "A pG (a || b)", "p": ["act1", "act2", "act3"]
             boolean result1 = TestHelper.check("model4", "asCTL_forall_always_true", null);
             assertTrue(result1);
 
+            // "formula": "A pG (b))", "p": ["act1"]
             boolean result2 = TestHelper.check("model4", "asCTL_forall_always_false", null);
             assertFalse(result2);
         } catch (IOException e) {
@@ -72,15 +76,17 @@ public class ModelCheckerSimpleAsCTLTests {
         }
     }
 
-    // todo passing but that's probably just a coincidence
+    // passing
     @Test
     public void model4_exists_until() {
         try {
+            // "formula": "E (a pUq d)", "p": ["act1"], "q": ["act4"]
             boolean result1 = TestHelper.check("model4", "asCTL_exists_until_true", null);
             assertTrue(result1);
 
-            boolean result2 = TestHelper.check("model4", "asCTL_exists_until_false", null);
-            assertFalse(result2);
+             // "formula": "E (a pUq d)", "p": ["act1"], "q": ["act2"]
+             boolean result2 = TestHelper.check("model4", "asCTL_exists_until_false", null);
+             assertFalse(result2);
         } catch (IOException e) {
             e.printStackTrace();
             fail(e.toString());

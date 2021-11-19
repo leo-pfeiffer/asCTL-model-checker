@@ -136,7 +136,7 @@ public class SatSetComputer implements Visitor {
         Set<State> satSetOrig = computeSatSet(formula.stateFormula, states);
 
         // remove from the sat set the states that cannot be reached via the pre-actions
-        Set<State> satSetPre = this.satSetPreActions(satSetOrig, formula.getActions());
+        Set<State> satSetPre = this.computeSatSetIn(satSetOrig, formula.getActions());
 
         // {s in S | Post(s) intersect Sat(formula) != {}}
         // all predecessors of the states in the sat set
@@ -146,7 +146,7 @@ public class SatSetComputer implements Visitor {
         //  filter the sat set returned from the last call by all those states that are actually
         //  transitioning via the required action.
         //  i.e. basically do the reverse of what satSetPreActions does
-        Set<State> filtered = this.satSetPostActions(satSetFiltered, formula.getActions());
+        Set<State> filtered = this.computeSatSetOut(satSetFiltered, formula.getActions());
 
         return filtered;
     }
@@ -165,37 +165,27 @@ public class SatSetComputer implements Visitor {
     @Override
     public Set<State> visitUntil(Until formula, Set<State> states) {
 
-        // sat sets for left and right ignoring the action index
-        Set<State> satSetLeft = computeSatSet(formula.left, states);
-        Set<State> satSetRight = computeSatSet(formula.right, states);
+        Set<State> satSetRight = this.computeSatSetIn(this.computeSatSet(formula.right, states), formula.getRightActions());
+        Set<State> satSetLeft = this.computeSatSetOut(this.computeSatSet(formula.left, states), formula.getLeftActions());
 
-        // consider action index
-        satSetLeft = this.satSetPostActions(satSetLeft, formula.getLeftActions());
-        satSetRight = this.satSetPreActions(satSetRight, formula.getRightActions());
+        Set<State> E = new HashSet<>(satSetRight);
+        Set<State> T = new HashSet<>(E);
 
-        // T := Sat(right)
-        Set<State> T = new HashSet<>(satSetRight);
+        while (!E.isEmpty()) {
+            Iterator<State> it = E.iterator();
+            State sPrime = it.next();
+            it.remove();
 
-        // while {s in Sat(left) w/o T | Post(s) intersect T != {}} != {} do
-        while (true) {
+            // direct predecessors of sPrime that can reach sPrime via A action
+            Set<State> preSPrime = sPrime.getPreStatesWithActions(model, formula.getLeftActions());
 
-            // sPrime = {s in satLeft w/o T}
-            Set<State> sPrime = setDifference(satSetLeft, T);
+            for (State s : preSPrime) {
 
-            // sPrime minus the states that don't match the actions
-            // todo to get to old version simply remove this line
-            sPrime = this.removeUnreachableStates(sPrime, satSetLeft, satSetRight, formula);
-
-            // retain those states from sPrime whose successors also appear in the finalSatSet (T)
-            sPrime = this.postIntersectStatesNotEmpty(sPrime, T);
-
-            if (sPrime.isEmpty()) {
-                break;
+                if (satSetLeft.contains(s) && !T.contains(s))
+                    E.add(s);
+                    T.add(s);
             }
-
-            T.addAll(sPrime);
         }
-
         return T;
     }
 
@@ -217,64 +207,43 @@ public class SatSetComputer implements Visitor {
     @Override
     public Set<State> visitAlways(Always formula, Set<State> states) {
 
-        // todo remove redundant declarations.. just for debugging
+        Set<State> satSet = computeSatSet(formula.stateFormula, states);
+        // filter incoming
+        satSet = this.computeSatSetIn(satSet, formula.getActions());
+        // filter outgoing
+        satSet = this.computeSatSetOut(satSet, formula.getActions());
 
-        Set<State> satSetOrig = computeSatSet(formula.stateFormula, states);
+        Set<State> E = setDifference(states, satSet);
+        Set<State> T = new HashSet<>(satSet);
 
-        // remove from the sat set those states that cannot be reached with the actions
-        Set<State> satSetPost = this.satSetPostActions(satSetOrig, formula.getActions());
-
-        // T := Sat(phi)
-        // Set<State> finalSatSet = new HashSet<>(satSetPre);
-        Set<State> finalSatSet = new HashSet<>(satSetPost);
-        Set<State> sub = new HashSet<>();
-
-        while(true) {
-
-            // {s in T | Post(s) ∩ T = {}};
-            for (State state : finalSatSet) {
-                Set<State> postSet = state.getPostStates(model);
-                if (Collections.disjoint(postSet, finalSatSet)) {
-                    sub.add(state);
-                }
-                // even if the post set is in the sat set, remove it if we can't reach that successor using the post-actions
-                else if (!formula.getActions().isEmpty()) {
-                    boolean retain = false;
-                    for (State postState : setIntersection(postSet, finalSatSet)) {
-                        // transitions from state to postState
-                        for (Transition transition : state.getOutgoingTransitions(model)) {
-                            // only consider transitions that lead to postState
-                            if (transition.getTarget().equals(postState.getName())) {
-                                // if we can get from the state to the postState using the post-actions
-                                if (!Collections.disjoint(transition.getActionsSet(), formula.getActions())) {
-                                    retain = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (retain) {
-                            break;
-                        }
-                    }
-                    if (!retain) {
-                        sub.add(state);
-                    }
-                }
-            }
-
-            if (sub.isEmpty()) {
-                break;
-            }
-
-            // T := T w/o {s}
-            finalSatSet.removeAll(sub);
-
-            if (finalSatSet.isEmpty()) {
-                break;
-            }
-
+        HashMap<State, Integer> count = new HashMap<>();
+        for (State s : satSet) {
+            // successors with correct incoming actions
+            Set<State> postS = this.computeSatSetIn(s.getPostStates(model), formula.getActions());
+            // successors with correct outgoing actions
+            postS = this.computeSatSetOut(postS, formula.getActions());
+            count.put(s, postS.size());
         }
-        return finalSatSet;
+
+        while (!E.isEmpty()) {
+            Iterator<State> it = E.iterator();
+            State sPrime = it.next();
+            it.remove();
+
+            // direct predecessors of sPrime that can reach sPrime via A action
+            Set<State> preSPrime = sPrime.getPreStatesWithActions(model, formula.getActions());
+            for (State s : preSPrime) {
+                if (T.contains(s)) {
+                    count.put(s, count.get(s) - 1);
+                    if (count.get(s) == 0) {
+                        T.remove(s);
+                        E.add(s);
+                    }
+                }
+            }
+        }
+
+        return T;
     }
 
     /**
@@ -284,7 +253,7 @@ public class SatSetComputer implements Visitor {
      * @param actions set of actions from the pre-actions
      * @return set of states that satisfy the pre-actions
      * */
-    private Set<State> satSetPreActions(Set<State> states, Set<String> actions) {
+    private Set<State> computeSatSetIn(Set<State> states, Set<String> actions) {
 
         // nothing to do if there are no pre-actions
         if (actions.isEmpty()) {
@@ -300,15 +269,20 @@ public class SatSetComputer implements Visitor {
 
             // retain only those transitions that are in the set of actions
             boolean retain = false;
-            for (Transition transition : incomingTransitions) {
 
-                // if transition contains correct action, then we're done
-                if (!Collections.disjoint(actions, transition.getActionsSet())) {
-                    retain = true;
-                    break;
+            if (state.isInit()) {
+                retain = true;
+            } else {
+
+                for (Transition transition : incomingTransitions) {
+
+                    // if transition contains correct action, then we're done
+                    if (!Collections.disjoint(actions, transition.getActionsSet())) {
+                        retain = true;
+                        break;
+                    }
                 }
             }
-
             if (retain) {
                 filteredStates.add(state);
             }
@@ -318,12 +292,12 @@ public class SatSetComputer implements Visitor {
     }
 
     /**
-     * Retains all states whose has any outgoing transitions that satisfy the post-actions.
+     * Retains all states that have any outgoing transitions via the post-actions.
      * @param states set of states
      * @param actions set of post-actions
      * @return set of states that satisfy the post-actions
      * */
-    private Set<State> satSetPostActions(Set<State> states, Set<String> actions) {
+    private Set<State> computeSatSetOut(Set<State> states, Set<String> actions) {
 
         // nothing to do if there are no post-actions
         if (actions.isEmpty()) {
