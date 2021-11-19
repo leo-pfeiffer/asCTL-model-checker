@@ -99,6 +99,9 @@ public class State {
 
     public Set<State> getPreStatesWithActions(Model model, Set<String> actions) {
         Set<State> preStates = this.getPreStates(model);
+        if (actions.isEmpty()) {
+            return preStates;
+        }
         Set<State> toRemove = new HashSet<>();
         for (State s : preStates) {
             for (Transition t: s.getOutgoingTransitions(model)) {
